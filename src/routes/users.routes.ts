@@ -1,10 +1,10 @@
 import {Router} from 'express'
 import { usersControllers } from '~/controllers'
+import { registerValidation } from '~/middlewares/users.middleware'
 
 const router = Router()
 
-router.route('/').get(usersControllers.getUsers)
-router.route('/register').post(usersControllers.register)
+router.route('/register').post(registerValidation, usersControllers.register)
 
 const UsersRouter = router
 
