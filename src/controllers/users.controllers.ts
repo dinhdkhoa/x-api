@@ -19,7 +19,6 @@ async function signRefreshToken(userId: string) {
 }
 
 export async function register(req: Request<{}, {},UserRequest>, res: Response) {
-  try {
     const {dob, ...payload} = req.body
     const {insertedId} = await collections.users.insertOne(new User({
       ...payload,
@@ -31,7 +30,4 @@ export async function register(req: Request<{}, {},UserRequest>, res: Response) 
       message: 'User registered successfully',
       accessToken, refreshToken
     })
-  } catch (error) {
-    res.status(400).json({ error })
-  }
 }
