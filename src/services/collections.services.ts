@@ -1,6 +1,6 @@
 import { Collection, Db } from "mongodb";
 import mongoDB from "./mongoDB.services";
-import User from "~/models/user.schema";
+import User from "~/models/schemas/user.schema";
 
 const collectionName = {
   users: 'users',

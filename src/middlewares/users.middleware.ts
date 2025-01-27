@@ -1,6 +1,6 @@
 import { checkSchema } from 'express-validator'
 import { usersControllers } from '~/controllers'
-import User from '~/models/user.schema'
+import User from '~/models/schemas/user.schema'
 import validate from '~/utils/validator'
 
 checkSchema({})

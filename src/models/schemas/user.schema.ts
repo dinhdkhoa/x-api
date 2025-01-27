@@ -1,10 +1,7 @@
 import { ObjectId } from "mongodb"
+import { UserVerifyStatus } from "~/constants/enum"
 
-enum UserVerifyStatus {
-  Unverified, // chưa xác thực email, mặc định = 0
-  Verified, // đã xác thực email
-  Banned // bị khóa
-}
+
 interface UserType {
   _id: ObjectId
   name: string
@@ -23,6 +20,11 @@ interface UserType {
   username: string // optional
   avatar: string // optional
   cover_photo: string // optional
+}
+
+export interface UserRequest extends Pick<UserType, 'name' | 'email' | 'password'> {
+  confirmPassword: string,
+  dob: string
 }
 
 export default class User {
