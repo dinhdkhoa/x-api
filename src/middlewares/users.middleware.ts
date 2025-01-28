@@ -66,3 +66,30 @@ export const registerValidation = validate(
     }
   })
 )
+
+export const loginValidation = validate(
+  checkSchema({
+    email: {
+      trim: true,
+      notEmpty: true,
+      isEmail: true
+    },
+    password: {
+      trim: true,
+      notEmpty: true,
+      custom: {
+        options: async (password, { req }) => {
+          const userId = await usersControllers.checkLoginCredentials(req.body.email, password)
+          if (!userId) {
+            throw new Error('Email or Password is incorrect')
+          }
+          req.body.userIdFromMiddleware = userId
+          return true
+        }
+      }
+    },
+
+ 
+  })
+)
+

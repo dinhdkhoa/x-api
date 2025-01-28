@@ -1,9 +1,11 @@
 import { Collection, Db } from "mongodb";
 import mongoDB from "./mongoDB.services";
 import User from "~/models/schemas/user.schema";
+import RefreshToken from "~/models/schemas/refreshToken.schema";
 
 const collectionName = {
   users: 'users',
+  refreshTokens: 'refreshTokens'
 } as const
 
 class CollectionManager {
@@ -16,6 +18,9 @@ class CollectionManager {
 
   static get users() {
     return this.getCollection<User>(collectionName.users)
+  }
+  static get refreshTokens() {
+    return this.getCollection<RefreshToken>(collectionName.refreshTokens)
   }
 
 }
