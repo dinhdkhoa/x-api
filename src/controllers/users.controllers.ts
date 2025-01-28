@@ -32,10 +32,12 @@ async function signTokens(userId: string) {
 }
 
 async function saveRefreshToken(token: RefreshToken) {
-  const filter = { userId: token.userId };
-  const update = { $set: { token: token.token },  $setOnInsert: { created_at: token.created_at }}
-  const options = { upsert: true }
-  await collections.refreshTokens.updateOne(filter, update, options)
+  // insert multiple tokens for one user to allow multiple devices login
+  await collections.refreshTokens.insertOne(token)
+  // const filter = { userId: token.userId };
+  // const update = { $set: { token: token.token },  $setOnInsert: { created_at: token.created_at }}
+  // const options = { upsert: true }
+  // await collections.refreshTokens.updateOne(filter, update, options)
 }
 
 
