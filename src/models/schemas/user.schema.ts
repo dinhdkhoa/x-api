@@ -10,8 +10,8 @@ interface UserType {
   password: string
   created_at: Date
   updated_at: Date
-  email_verify_token: string // jwt hoặc '' nếu đã xác thực email
-  forgot_password_token: string // jwt hoặc '' nếu đã xác thực email
+  email_verify_at: Date | null // jwt hoặc '' nếu đã xác thực email
+  changePasswordAt: Date | null // jwt hoặc '' nếu đã xác thực email
   verify: UserVerifyStatus
 
   bio: string // optional
@@ -32,12 +32,12 @@ export default class User {
   private name: string
   private email: string
   private date_of_birth: Date
-  private password: string
+  public password: string
   private created_at: Date
   private updated_at: Date
-  private email_verify_token: string
-  private forgot_password_token: string
-  private verify: UserVerifyStatus
+  private email_verify_at: Date | null
+  public changePasswordAt: Date | null
+  public verify: UserVerifyStatus
 
   private bio: string
   private location: string
@@ -55,8 +55,8 @@ export default class User {
     this.password = user.password
     this.created_at = user.created_at  || date
     this.updated_at = user.updated_at  || date
-    this.email_verify_token = user.email_verify_token || ''
-    this.forgot_password_token = user.forgot_password_token || ''
+    this.email_verify_at = null
+    this.changePasswordAt = null
     this.verify = user.verify || UserVerifyStatus.Unverified
     this.bio = user.bio || ''
     this.location = user.location || ''

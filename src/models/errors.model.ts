@@ -19,3 +19,12 @@ export class EntityError extends ErrorWithStatus {
     this.errors = errors
   }
 }
+
+export class UnauthorizedError extends ErrorWithStatus {
+  errors?: Record<string, any>
+
+  constructor(message?: string, errors?: Record<string, any> ) {
+    super({ status: HttpStatusCode.Unauthorized, message: message || 'Unauthorized' })
+    this.errors = errors
+  }
+}
