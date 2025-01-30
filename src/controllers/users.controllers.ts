@@ -37,7 +37,10 @@ async function signToken(userId: string, tokenType: TokenType) {
 }
 
 async function signCredentialTokens(userId: string) {
-  const [accessToken, refreshToken] = await Promise.all([signToken(userId, TokenType.AccessToken), signToken(userId, TokenType.RefreshToken)])
+  const [accessToken, refreshToken] = await Promise.all([
+    signToken(userId, TokenType.AccessToken),
+    signToken(userId, TokenType.RefreshToken)
+  ])
   return { accessToken, refreshToken }
 }
 
@@ -66,7 +69,6 @@ export async function register(req: Request<{}, {}, UserRequest>, res: Response)
     signCredentialTokens(userId),
     signToken(userId, TokenType.EmailVerifyToken)
   ])
-  console.log(emailVerifyToken)
   await saveRefreshToken(new RefreshToken({ userId, token: refreshToken }))
   res.json({
     message: 'User registered successfully',
@@ -124,26 +126,28 @@ export async function changePasswordRequest(
 }
 
 export async function changePassword(
-  req: Request<{}, {}, { email: string; password: string; forgotPasswordToken: string, userIdFromMiddleware: string }>,
+  req: Request<{}, {}, { email: string; password: string; forgotPasswordToken: string; userIdFromMiddleware: string }>,
   res: Response
 ) {
-  const { email, password , userIdFromMiddleware} = req.body
-  const user = (await collections.users.findOne({ email , _id: new ObjectId(userIdFromMiddleware) })) as User
+  const { email, password, userIdFromMiddleware } = req.body
+  const user = (await collections.users.findOne({ email, _id: new ObjectId(userIdFromMiddleware) })) as User
 
   if (!user) throw new ErrorWithStatus({ message: 'E-mail not found', status: HttpStatusCode.NotFound })
   const hashPW = hashPassword(password)
   if (user.password == hashPW) throw new UnauthorizedError('Password Cannot Be The Same')
-  if (user.verify == UserVerifyStatus.Unverified) throw new UnauthorizedError('Change Password Not Allowed - Email is not verified')
-  if (!canChangePassword(user.changePasswordAt)) throw new Error('You cannot change your password yet. Please try again later.')
+  if (user.verify == UserVerifyStatus.Unverified)
+    throw new UnauthorizedError('Change Password Not Allowed - Email is not verified')
+  if (!canChangePassword(user.changePasswordAt))
+    throw new Error('You cannot change your password yet. Please try again later.')
 
   const now = new Date()
-  const filter = { _id: new ObjectId(user._id)}
-  const update = { $set: { changePasswordAt: now, updated_at: now, password: hashPW}}
+  const filter = { _id: new ObjectId(user._id) }
+  const update = { $set: { changePasswordAt: now, updated_at: now, password: hashPW } }
   await collections.users.updateOne(filter, update)
   res.status(HttpStatusCode.OK).json({ message: 'Password changed successfully.' })
 }
 
-export function canChangePassword(changePasswordAt: Date | null, limitTime? :number): boolean {
+export function canChangePassword(changePasswordAt: Date | null, limitTime?: number): boolean {
   if (!changePasswordAt) {
     return true
   }
@@ -158,3 +162,22 @@ export function canChangePassword(changePasswordAt: Date | null, limitTime? :num
   return differenceInMilliseconds >= (limitTime ?? sevenDaysInMilliseconds)
 }
 
+async function getUserProfile(userId: string) {
+  return await collections.users.findOne({ _id: new ObjectId(userId) } , {projection : {
+    name: 1,
+    email: 1,
+    date_of_birth: 1,
+    bio: 1,           
+    location: 1,      
+    website: 1,       
+    username: 1,      
+    avatar: 1,       
+    cover_photo: 1
+  }}) as User
+}
+
+export async function getProfile(req: Request, res: Response) {
+  const {userId} = req.decodedAccessToken!
+  const user = await getUserProfile(userId)
+  res.json({ user })
+}

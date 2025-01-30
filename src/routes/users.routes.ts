@@ -12,6 +12,8 @@ router.route('/verify').post(emailVerifyValidation, errorHandler(usersController
 router.route('/request-change-password').post(changePasswordEmailValidation, errorHandler(usersControllers.changePasswordRequest))
 router.route('/change-password').post(changePasswordValidation, errorHandler(usersControllers.changePassword))
 
+router.route('/me').get(accessTokenValidation, errorHandler(usersControllers.getProfile))
+
 const UsersRouter = router
 
 export default UsersRouter
