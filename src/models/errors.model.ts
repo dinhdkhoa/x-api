@@ -28,3 +28,11 @@ export class UnauthorizedError extends ErrorWithStatus {
     this.errors = errors
   }
 }
+export class ForbiddenError extends ErrorWithStatus {
+  errors?: Record<string, any>
+
+  constructor(message?: string, errors?: Record<string, any> ) {
+    super({ status: HttpStatusCode.Forbidden, message: message || 'Forbidden' })
+    this.errors = errors
+  }
+}

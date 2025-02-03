@@ -1,5 +1,5 @@
 import jwt , {JwtPayload, SignOptions, VerifyErrors} from 'jsonwebtoken'
-import { TokenType } from '~/constants/enum'
+import { TokenType, UserVerifyStatus } from '~/constants/enum'
 
 const JWT_SECRET = process.env.JWT_SECRET as string
 const ACCESSS_TOKEN_EXPIRES_IN = process.env.ACCESSS_TOKEN_EXPIRES_IN as any
@@ -20,6 +20,7 @@ interface JWTVerifyParams {
 export interface TokenPayload extends JwtPayload {
   userId: string
   type: TokenType
+  verify?: UserVerifyStatus
 }
 
 export const signJWT = ({payload, privateKey = JWT_SECRET, options = {algorithm: 'HS256'}}: JWTSignParams) => {

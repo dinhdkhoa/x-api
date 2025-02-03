@@ -1,13 +1,14 @@
+import { NextFunction } from 'express'
 import { checkSchema } from 'express-validator'
 import { JsonWebTokenError } from 'jsonwebtoken'
 import { TokenType, UserVerifyStatus } from '~/constants/enum'
 import { HttpStatusCode } from '~/constants/HttpStatusCode.enum'
 import { usersControllers } from '~/controllers'
 import { canChangePassword } from '~/controllers/users.controllers'
-import { ErrorWithStatus, UnauthorizedError } from '~/models/errors.model'
-import User from '~/models/schemas/user.schema'
+import { ErrorWithStatus, ForbiddenError, UnauthorizedError } from '~/models/errors.model'
 import { verifyJWT } from '~/utils/jwt'
 import validate from '~/utils/validator'
+import { Request, Response } from 'express'
 
 checkSchema({})
 
@@ -88,11 +89,11 @@ export const loginValidation = validate(
         notEmpty: true,
         custom: {
           options: async (password: string, { req }) => {
-            const userId = await usersControllers.checkLoginCredentials(req.body.email, password)
-            if (!userId) {
+            const user = await usersControllers.checkLoginCredentials(req.body.email, password)
+            if (!user) {
               throw new Error('Email or Password is incorrect')
             }
-            req.body.userIdFromMiddleware = userId
+            req.user = user
             return true
           }
         }
@@ -202,15 +203,15 @@ export const changePasswordEmailValidation = validate(
         isEmail: true,
         custom: {
           options: async (email: string, { req }) => {
-            const user = await usersControllers.checkUserExisted(email, true)
+            const user = await usersControllers.checkUserExisted(email)
             if (!user) {
               throw new ErrorWithStatus({ message: 'Email not found', status: HttpStatusCode.NotFound })
             }
-            if ((user as User).verify == UserVerifyStatus.Unverified)
-              throw new UnauthorizedError('Email is not verified')
-            if(!canChangePassword((user as User).changePasswordAt, 30 * 60 * 1000)) throw new UnauthorizedError('An Email Has Been Sent To You, Please Check Your Inbox')
+            if (user.verify == UserVerifyStatus.Unverified)
+              throw new ForbiddenError('Email is not verified')
+            if(!canChangePassword(user.changePasswordAt, 30 * 60 * 1000)) throw new ForbiddenError('An Email Has Been Sent To You, Please Check Your Inbox')
             // if((user as User).forgot_password_token) throw new UnauthorizedError( 'Check Email For Token')
-            req.body.userIdFromMiddleware = (user as User)._id.toString()
+            req.user = user
           }
         }
       }
@@ -234,11 +235,11 @@ export const changePasswordValidation = validate(
           options: async (forgotPasswordToken: string, { req }) => {
             try {
               if (!forgotPasswordToken) {
-                throw new UnauthorizedError('Token is required')
+                throw new ForbiddenError('Token is required')
               }
               const jwtPayload = await verifyJWT({ token: forgotPasswordToken })
               if(jwtPayload){
-                if(jwtPayload.type !== TokenType.ForgotPasswordToken) throw new UnauthorizedError('Invalid Token')
+                if(jwtPayload.type !== TokenType.ForgotPasswordToken) throw new ForbiddenError('Invalid Token')
                 req.body.userIdFromMiddleware = jwtPayload.userId
                 return true
               }
@@ -272,3 +273,9 @@ export const changePasswordValidation = validate(
     ['body']
   )
 )
+
+export const verifiedUserValidator = (req: Request, res: Response, next: NextFunction) => {
+  const {verify} = req.decodedAccessToken!
+  if(verify !== UserVerifyStatus.Verified) next(new ForbiddenError('User is not verified'))
+  next()
+}

@@ -1,6 +1,8 @@
 import {Router} from 'express'
 import { usersControllers } from '~/controllers'
-import { loginValidation, accessTokenValidation, registerValidation, refreshTokenValidation, emailVerifyValidation, changePasswordEmailValidation, changePasswordValidation } from '~/middlewares/users.middleware'
+import { filterBody } from '~/middlewares/common.middleware'
+import { loginValidation, accessTokenValidation, registerValidation, refreshTokenValidation, emailVerifyValidation, changePasswordEmailValidation, changePasswordValidation, verifiedUserValidator } from '~/middlewares/users.middleware'
+import User from '~/models/schemas/user.schema'
 import { errorHandler } from '~/utils/error-handlers'
 
 const router = Router()
@@ -12,7 +14,8 @@ router.route('/verify').post(emailVerifyValidation, errorHandler(usersController
 router.route('/request-change-password').post(changePasswordEmailValidation, errorHandler(usersControllers.changePasswordRequest))
 router.route('/change-password').post(changePasswordValidation, errorHandler(usersControllers.changePassword))
 
-router.route('/me').get(accessTokenValidation, errorHandler(usersControllers.getProfile))
+router.route('/me').get(accessTokenValidation, errorHandler(usersControllers.getUser)).patch(accessTokenValidation, verifiedUserValidator, filterBody<User>(['name', 'email']), errorHandler(usersControllers.updateProfile))
+router.route('/:username').get(errorHandler(usersControllers.getPublicProfile))
 
 const UsersRouter = router
 

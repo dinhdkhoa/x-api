@@ -29,22 +29,22 @@ export interface UserRequest extends Pick<UserType, 'name' | 'email' | 'password
 
 export default class User {
   public _id: ObjectId
-  private name: string
-  private email: string
-  private date_of_birth: Date
+  public name: string
+  public email: string
+  public date_of_birth: Date
   public password: string
-  private created_at: Date
-  private updated_at: Date
-  private email_verify_at: Date | null
+  public created_at: Date
+  public updated_at: Date
+  public email_verify_at: Date | null
   public changePasswordAt: Date | null
   public verify: UserVerifyStatus
 
-  private bio: string
-  private location: string
-  private website: string
-  private username: string
-  private avatar: string
-  private cover_photo: string
+  public bio: string
+  public location: string
+  public website: string
+  public username: string
+  public avatar: string
+  public cover_photo: string
 
   constructor(user:  Partial<Omit<UserType, 'email' | 'password'>> & Pick<UserType, 'email' | 'password'>) {
     const date = new Date()
@@ -61,7 +61,7 @@ export default class User {
     this.bio = user.bio || ''
     this.location = user.location || ''
     this.website = user.website || ''
-    this.username = user.username || ''
+    this.username = user.username || this.name + this._id.toString()
     this.avatar = user.avatar || ''
     this.cover_photo = user.cover_photo || ''
   }
