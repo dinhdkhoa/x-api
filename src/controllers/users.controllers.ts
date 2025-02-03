@@ -121,8 +121,7 @@ export async function changePassword(
   const user = (await collections.users.findOne({ email, _id: new ObjectId(userIdFromMiddleware) })) as User
 
   if (!user) throw new ErrorWithStatus({ message: 'E-mail not found', status: HttpStatusCode.NotFound })
-  const hashPW = hashPassword(password)
-  if (user.password == hashPW) throw new ForbiddenError('Password Cannot Be The Same')
+
   if (user.verify == UserVerifyStatus.Unverified)
     throw new ForbiddenError('Change Password Not Allowed - Email is not verified')
   if (!canChangePassword(user.changePasswordAt))
@@ -130,7 +129,7 @@ export async function changePassword(
 
   const now = new Date()
   const filter = { _id: new ObjectId(user._id) }
-  const update = { $set: { changePasswordAt: now, updated_at: now, password: hashPW } }
+  const update = { $set: { changePasswordAt: now, updated_at: now, password } }
   await collections.users.updateOne(filter, update)
   res.status(HttpStatusCode.OK).json({ message: 'Password changed successfully.' })
 }

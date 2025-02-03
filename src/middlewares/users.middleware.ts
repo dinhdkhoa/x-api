@@ -9,6 +9,7 @@ import { ErrorWithStatus, ForbiddenError, UnauthorizedError } from '~/models/err
 import { verifyJWT } from '~/utils/jwt'
 import validate from '~/utils/validator'
 import { Request, Response } from 'express'
+import { hashPassword } from '~/utils/encrytion'
 
 checkSchema({})
 
@@ -207,9 +208,9 @@ export const changePasswordEmailValidation = validate(
             if (!user) {
               throw new ErrorWithStatus({ message: 'Email not found', status: HttpStatusCode.NotFound })
             }
-            if (user.verify == UserVerifyStatus.Unverified)
-              throw new ForbiddenError('Email is not verified')
-            if(!canChangePassword(user.changePasswordAt, 30 * 60 * 1000)) throw new ForbiddenError('An Email Has Been Sent To You, Please Check Your Inbox')
+            if (user.verify == UserVerifyStatus.Unverified) throw new ForbiddenError('Email is not verified')
+            if (!canChangePassword(user.changePasswordAt, 30 * 60 * 1000))
+              throw new ForbiddenError('An Email Has Been Sent To You, Please Check Your Inbox')
             // if((user as User).forgot_password_token) throw new UnauthorizedError( 'Check Email For Token')
             req.user = user
           }
@@ -238,8 +239,8 @@ export const changePasswordValidation = validate(
                 throw new ForbiddenError('Token is required')
               }
               const jwtPayload = await verifyJWT({ token: forgotPasswordToken })
-              if(jwtPayload){
-                if(jwtPayload.type !== TokenType.ForgotPasswordToken) throw new ForbiddenError('Invalid Token')
+              if (jwtPayload) {
+                if (jwtPayload.type !== TokenType.ForgotPasswordToken) throw new ForbiddenError('Invalid Token')
                 req.body.userIdFromMiddleware = jwtPayload.userId
                 return true
               }
@@ -251,7 +252,11 @@ export const changePasswordValidation = validate(
             }
           }
         }
-
+      },
+      oldPassword: {
+        trim: true,
+        notEmpty: true,
+        isString: true,
       },
       password: {
         trim: true,
@@ -267,15 +272,23 @@ export const changePasswordValidation = validate(
           },
           errorMessage:
             'Password must be at least 8 characters long, contain at least 1 lowercase letter, 1 uppercase letter, 1 number, and 1 symbol'
+        },
+        custom: {
+          options: async (password: string, { req }) => {
+            if(hashPassword(password) == hashPassword(req.body.password)) {
+              throw new ForbiddenError('Password Cannot Be The Same')
+            }
+            req.body.password = hashPassword(password)
+          }
         }
-      }
+      },
     },
     ['body']
   )
 )
 
 export const verifiedUserValidator = (req: Request, res: Response, next: NextFunction) => {
-  const {verify} = req.decodedAccessToken!
-  if(verify !== UserVerifyStatus.Verified) next(new ForbiddenError('User is not verified'))
+  const { verify } = req.decodedAccessToken!
+  if (verify !== UserVerifyStatus.Verified) next(new ForbiddenError('User is not verified'))
   next()
 }
