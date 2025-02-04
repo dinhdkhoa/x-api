@@ -1,21 +1,18 @@
-import { NextFunction, Request, Response } from 'express'
+import { Request, Response } from 'express'
 import formidable, { File, errors as formidableErrors } from 'formidable'
-import path from 'path'
-import { UserRequest } from '~/models/schemas/user.schema'
 import fs from 'fs'
-import { error } from 'console'
-import { ErrorWithStatus } from '~/models/errors.model'
-import { HttpStatusCode } from '~/constants/HttpStatusCode.enum'
+import path from 'path'
 import sharp from 'sharp'
-
-const uploadsFolderPath = path.resolve('uploads/images')
+import { UPLOAD_IMAGE_DIR } from '~/constants/dir'
+import { HttpStatusCode } from '~/constants/HttpStatusCode.enum'
+import { ErrorWithStatus } from '~/models/errors.model'
 
 const uploadImage = async (req: Request, res: Response) => {
   const form = formidable({
-    uploadDir: uploadsFolderPath,
+    uploadDir: UPLOAD_IMAGE_DIR,
     maxFiles: 1,
     keepExtensions: true,
-    maxFileSize: 300 * 1024, //300kb,
+    maxFileSize: 700 * 1024, //300kb,
     filter: ({ name, mimetype, ...part }) => {
       const valid = name === 'image' && Boolean(mimetype?.includes('image'))
       if (!valid) {
@@ -43,7 +40,7 @@ const uploadImage = async (req: Request, res: Response) => {
 const resizeImage = async (img: File) => {
   const tempFilePath = img.filepath
   const newName = img.newFilename.split('.')[0] + '.jpeg'
-  const resizedFilePath = path.join(uploadsFolderPath, newName)
+  const resizedFilePath = path.join(UPLOAD_IMAGE_DIR, newName)
   sharp.cache(false)
   const resizedImg = await sharp(tempFilePath).jpeg({ quality: 20 }).toFile(resizedFilePath)
 
@@ -51,9 +48,6 @@ const resizeImage = async (img: File) => {
 
   return { ...resizedImg, newName }
 }
-
-const UPLOAD_IMAGE_TEMP_DIR = path.resolve('uploads/images')
-const UPLOAD_VIDEO_TEMP_DIR = path.resolve('uploads/videos')
 
 export const MediaService = {
   uploadImage,
