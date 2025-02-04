@@ -5,7 +5,8 @@ import { errorHandler } from '~/utils/error-handlers'
 
 const router = Router()
 
-router.route('/upload').post(errorHandler(mediaControllers.uploadImage))
+router.route('/upload').post(errorHandler(mediaControllers.uploadImages))
+router.route('/upload/videos').post(errorHandler(mediaControllers.uploadVideos))
 
 const MediaRouter = router
 
