@@ -20,13 +20,13 @@ export async function checkLoginCredentials(email: string, password: string) {
 }
 
 async function signToken(userId: string, tokenType: TokenType, verify?: UserVerifyStatus) {
-  return await signJWT({ payload: { userId, type: tokenType , verify} })
+  return await signJWT({ payload: { userId, type: tokenType, verify } })
 }
 
-async function signCredentialTokens(userId: string, verify : UserVerifyStatus) {
+async function signCredentialTokens(userId: string, verify: UserVerifyStatus) {
   const [accessToken, refreshToken] = await Promise.all([
-    signToken(userId,  TokenType.AccessToken, verify),
-    signToken(userId,  TokenType.RefreshToken, verify)
+    signToken(userId, TokenType.AccessToken, verify),
+    signToken(userId, TokenType.RefreshToken, verify)
   ])
   return { accessToken, refreshToken }
 }
@@ -84,6 +84,15 @@ export async function logout(req: Request, res: Response) {
   }
   throw new UnauthorizedError('Unable To Find Refresh Token')
 }
+export async function refreshUserToken(req: Request, res: Response) {
+  const decodedRefreshToken = req.decodedRefreshToken!
+  const isDeleted = await collections.refreshTokens.findOneAndDelete({ userId: decodedRefreshToken.userId })
+  if (isDeleted) {
+    res.json({ message: 'Logout successfully' })
+    return
+  }
+  throw new UnauthorizedError('Unable To Find Refresh Token')
+}
 
 export async function verifyEmail(req: Request, res: Response) {
   const decodedEmailVerifyToken = req.decodedEmailVerifyToken!
@@ -99,18 +108,22 @@ export async function verifyEmail(req: Request, res: Response) {
   }
 }
 
-export async function changePasswordRequest(
-  req: Request,
-  res: Response
-) {
-  const { _id, verify } = req.user!
-  const forgot_password_token = await signToken(_id.toString(), TokenType.ForgotPasswordToken)
-  // const result = await collections.users.findOneAndUpdate(
-  //   { _id: new ObjectId(userIdFromMiddleware)},
-  //   { $set: { forgot_password_token } , $currentDate: {updated_at:  true}},
-  //   { returnDocument: 'after'}
-  // )
-  res.json({ message: `Password Change Has Been Sent To Your Email: ${forgot_password_token}` })
+export async function changePasswordRequest(req: Request<{}, {}, { refreshToken: string }>, res: Response) {
+  const { _id, verify, exp } = req.decodedEmailVerifyToken!
+  const userId = _id.toString()
+  const { refreshToken } = req.body
+
+  const [accessToken, newRefreshToken] = await Promise.all([
+    signToken(userId, TokenType.AccessToken, verify),
+    signJWT({ payload: { userId, type: TokenType.RefreshToken, verify, exp } }),
+    collections.refreshTokens.findOneAndDelete({ userId, token: refreshToken })
+  ])
+  await saveRefreshToken(new RefreshToken({ userId, token: newRefreshToken }))
+  res.json({
+    message: 'Refreshed Token',
+    accessToken,
+    refreshToken: newRefreshToken
+  })
 }
 
 export async function changePassword(
@@ -150,23 +163,28 @@ export function canChangePassword(changePasswordAt: Date | null, limitTime?: num
 }
 
 async function getUserProfile(filter: Filter<User>) {
-  const user = await collections.users.findOne({ ...filter } , {projection : {
-    name: 1,
-    email: 1,
-    date_of_birth: 1,
-    bio: 1,           
-    location: 1,      
-    website: 1,       
-    username: 1,      
-    avatar: 1,       
-    cover_photo: 1
-  }}) as User
-  if(!user) throw new ErrorWithStatus({ message: 'User not found', status: HttpStatusCode.NotFound })
+  const user = (await collections.users.findOne(
+    { ...filter },
+    {
+      projection: {
+        name: 1,
+        email: 1,
+        date_of_birth: 1,
+        bio: 1,
+        location: 1,
+        website: 1,
+        username: 1,
+        avatar: 1,
+        cover_photo: 1
+      }
+    }
+  )) as User
+  if (!user) throw new ErrorWithStatus({ message: 'User not found', status: HttpStatusCode.NotFound })
   return user
 }
 
 export async function getUser(req: Request, res: Response) {
-  const {userId} = req.decodedAccessToken!
+  const { userId } = req.decodedAccessToken!
   const user = await getUserProfile({ _id: new ObjectId(userId) })
 
   res.json({ user })
@@ -177,8 +195,8 @@ export async function updateProfile(req: Request, res: Response) {
   // const user = await getUserProfile(userId)
   res.json({ data: req.body })
 }
-export async function getPublicProfile(req: Request<{username: string}>, res: Response) {
-  const {username} = req.params
+export async function getPublicProfile(req: Request<{ username: string }>, res: Response) {
+  const { username } = req.params
   const user = await getUserProfile({ username })
   res.json({ user })
 }

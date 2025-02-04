@@ -1,4 +1,4 @@
-import jwt , {JwtPayload, SignOptions, VerifyErrors} from 'jsonwebtoken'
+import jwt, { JwtPayload, SignOptions, VerifyErrors } from 'jsonwebtoken'
 import { TokenType, UserVerifyStatus } from '~/constants/enum'
 
 const JWT_SECRET = process.env.JWT_SECRET as string
@@ -8,12 +8,12 @@ const EMAIL_VERIFY_TOKEN_EXPIRES_IN = process.env.EMAIL_VERIFY_TOKEN_EXPIRES_IN 
 const FORGOT_PASSWORD_TOKEN_EXPIRES_IN = process.env.FORGOT_PASSWORD_TOKEN_EXPIRES_IN as any
 
 interface JWTSignParams {
-  payload: any & {type?: TokenType },
-  privateKey?: string,
+  payload: any & { type?: TokenType }
+  privateKey?: string
   options?: SignOptions
 }
 interface JWTVerifyParams {
-  token: string,
+  token: string
   secretOrPublicKey?: jwt.Secret | jwt.PublicKey | jwt.GetPublicKeyOrSecret
 }
 
@@ -23,14 +23,14 @@ export interface TokenPayload extends JwtPayload {
   verify?: UserVerifyStatus
 }
 
-export const signJWT = ({payload, privateKey = JWT_SECRET, options = {algorithm: 'HS256'}}: JWTSignParams) => {
+export const signJWT = ({ payload, privateKey = JWT_SECRET, options = { algorithm: 'HS256' } }: JWTSignParams) => {
   if (payload.type || payload.type === 0) {
     switch (payload.type) {
       case TokenType.AccessToken:
         options.expiresIn = ACCESSS_TOKEN_EXPIRES_IN
         break
       case TokenType.RefreshToken:
-        options.expiresIn = REFRESH_TOKEN_EXPIRES_IN
+        options.expiresIn = payload.exp ?? REFRESH_TOKEN_EXPIRES_IN
         break
       case TokenType.EmailVerifyToken:
         options.expiresIn = EMAIL_VERIFY_TOKEN_EXPIRES_IN
@@ -44,16 +44,17 @@ export const signJWT = ({payload, privateKey = JWT_SECRET, options = {algorithm:
       if (err) {
         reject(err)
       }
-      resolve(token as string) 
+      resolve(token as string)
     })
   })
 }
-export const verifyJWT = ({token, secretOrPublicKey = JWT_SECRET}: JWTVerifyParams) => {
-  return new Promise<TokenPayload>(async(resolve, reject) => {
-    await jwt.verify(token, secretOrPublicKey, (err:  VerifyErrors | null, decoded: any) => {
+export const verifyJWT = ({ token, secretOrPublicKey = JWT_SECRET }: JWTVerifyParams) => {
+  return new Promise<TokenPayload>(async (resolve, reject) => {
+    await jwt.verify(token, secretOrPublicKey, (err: VerifyErrors | null, decoded: any) => {
       if (err) {
         reject(err)
       }
-      resolve(decoded as TokenPayload) 
+      resolve(decoded as TokenPayload)
     })
-})}
+  })
+}
