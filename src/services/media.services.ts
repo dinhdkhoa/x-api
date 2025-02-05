@@ -82,6 +82,7 @@ const uploadVideos = async (req: Request, res: Response) => {
   })
 }
 
+const ffmpegDockerImageName = 'jrottenberg/ffmpeg:7.1-alpine'
 const hlsEncodeVideo = ({
   ffmpegOptions = '',
   inputFile,
@@ -92,11 +93,7 @@ const hlsEncodeVideo = ({
   ffmpegOptions: string
 }) => {
   return new Promise<{ encodedFileName: string }>((resolve, reject) => {
-    const dockerCommand = `docker run --rm -v "${UPLOAD_VIDEO_DIR}":/videos jrottenberg/ffmpeg:4.4-alpine \
-            -i /videos/${inputFile} \
-            -stats \
-            ${ffmpegOptions} \
-            /videos/${outputFile}`
+    const dockerCommand = `docker run --rm -v "${UPLOAD_VIDEO_DIR}":/videos ${ffmpegDockerImageName} -i /videos/${inputFile} -stats ${ffmpegOptions} /videos/${outputFile}`
 
     exec(dockerCommand, (error, stdout, stderr) => {
       if (error) {
@@ -108,7 +105,9 @@ const hlsEncodeVideo = ({
         console.warn(`Stderr: ${stderr}`)
       }
 
-      console.log(`Stdout: ${stdout}`)
+      // console.log(`Stdout: ${stdout}`)
+      fs.unlinkSync(path.join(UPLOAD_VIDEO_DIR, inputFile))
+
       resolve({ encodedFileName: outputFile })
     })
   })
