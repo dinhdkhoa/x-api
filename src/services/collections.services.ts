@@ -3,11 +3,13 @@ import mongoDB from './mongoDB.services'
 import User from '~/models/schemas/user.schema'
 import RefreshToken from '~/models/schemas/refreshToken.schema'
 import Tweet from '~/models/schemas/tweet.schema'
+import Hashtag from '~/models/schemas/hashtags.schema'
 
 const collectionName = {
   users: 'users',
   refreshTokens: 'refreshTokens',
-  tweets: 'tweets'
+  tweets: 'tweets',
+  hashtags: 'hashtags',
 } as const
 
 class CollectionManager {
@@ -26,6 +28,9 @@ class CollectionManager {
   }
   static get tweets() {
     return this.getCollection<Tweet>(collectionName.tweets)
+  }
+  static get hashtags() {
+    return this.getCollection<Hashtag>(collectionName.hashtags)
   }
 }
 
