@@ -84,14 +84,23 @@ export async function logout(req: Request, res: Response) {
   }
   throw new UnauthorizedError('Unable To Find Refresh Token')
 }
-export async function refreshUserToken(req: Request, res: Response) {
-  const decodedRefreshToken = req.decodedRefreshToken!
-  const isDeleted = await collections.refreshTokens.findOneAndDelete({ userId: decodedRefreshToken.userId })
-  if (isDeleted) {
-    res.json({ message: 'Logout successfully' })
-    return
-  }
-  throw new UnauthorizedError('Unable To Find Refresh Token')
+export async function refreshUserToken(req: Request<{}, {}, { refreshToken: string }>, res: Response) {
+  const { userId , verify, exp } = req.decodedRefreshToken!
+  const { refreshToken } = req.body
+
+  const [accessToken, newRefreshToken, isDeleted] = await Promise.all([
+    signToken(userId, TokenType.AccessToken, verify),
+    signJWT({ payload: { userId, type: TokenType.RefreshToken, verify, exp } }),
+    collections.refreshTokens.deleteOne({ userId, token: refreshToken }, {})
+  ])
+  if(isDeleted.deletedCount == 0) throw new UnauthorizedError('Refresh Token Has Been Deleted')
+  await saveRefreshToken(new RefreshToken({ userId, token: newRefreshToken }))
+  
+  res.json({
+    message: 'Refreshed Token',
+    accessToken,
+    refreshToken: newRefreshToken
+  })
 }
 
 export async function verifyEmail(req: Request, res: Response) {
@@ -108,22 +117,18 @@ export async function verifyEmail(req: Request, res: Response) {
   }
 }
 
-export async function changePasswordRequest(req: Request<{}, {}, { refreshToken: string }>, res: Response) {
-  const { _id, verify, exp } = req.decodedEmailVerifyToken!
-  const userId = _id.toString()
-  const { refreshToken } = req.body
-
-  const [accessToken, newRefreshToken] = await Promise.all([
-    signToken(userId, TokenType.AccessToken, verify),
-    signJWT({ payload: { userId, type: TokenType.RefreshToken, verify, exp } }),
-    collections.refreshTokens.findOneAndDelete({ userId, token: refreshToken })
-  ])
-  await saveRefreshToken(new RefreshToken({ userId, token: newRefreshToken }))
-  res.json({
-    message: 'Refreshed Token',
-    accessToken,
-    refreshToken: newRefreshToken
-  })
+export async function changePasswordRequest(
+  req: Request,
+  res: Response
+) {
+  const { _id, verify } = req.user!
+  const forgot_password_token = await signToken(_id.toString(), TokenType.ForgotPasswordToken)
+  // const result = await collections.users.findOneAndUpdate(
+  //   { _id: new ObjectId(userIdFromMiddleware)},
+  //   { $set: { forgot_password_token } , $currentDate: {updated_at:  true}},
+  //   { returnDocument: 'after'}
+  // )
+  res.json({ message: `Password Change Has Been Sent To Your Email: ${forgot_password_token}` })
 }
 
 export async function changePassword(
