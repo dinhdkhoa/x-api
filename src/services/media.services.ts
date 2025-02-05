@@ -6,6 +6,7 @@ import sharp from 'sharp'
 import { UPLOAD_IMAGE_DIR, UPLOAD_VIDEO_DIR } from '~/constants/dir'
 import { HttpStatusCode } from '~/constants/HttpStatusCode.enum'
 import { ErrorWithStatus } from '~/models/errors.model'
+import { exec } from 'child_process'
 
 const uploadImages = async (req: Request, res: Response) => {
   const form = formidable({
@@ -81,8 +82,41 @@ const uploadVideos = async (req: Request, res: Response) => {
   })
 }
 
+const hlsEncodeVideo = ({
+  ffmpegOptions = '',
+  inputFile,
+  outputFile
+}: {
+  inputFile: string
+  outputFile: string
+  ffmpegOptions: string
+}) => {
+  return new Promise<{ encodedFileName: string }>((resolve, reject) => {
+    const dockerCommand = `docker run --rm -v "${UPLOAD_VIDEO_DIR}":/videos jrottenberg/ffmpeg:4.4-alpine \
+            -i /videos/${inputFile} \
+            -stats \
+            ${ffmpegOptions} \
+            /videos/${outputFile}`
+
+    exec(dockerCommand, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error: ${error.message}`)
+        return reject({ error: 'Video encoding failed', details: stderr })
+      }
+
+      if (stderr) {
+        console.warn(`Stderr: ${stderr}`)
+      }
+
+      console.log(`Stdout: ${stdout}`)
+      resolve({ encodedFileName: outputFile })
+    })
+  })
+}
+
 export const MediaService = {
   uploadImages,
   resizeImage,
-  uploadVideos
+  uploadVideos,
+  hlsEncodeVideo
 }

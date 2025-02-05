@@ -17,10 +17,16 @@ export const uploadImages = async (req: Request, res: Response) => {
 
 export const uploadVideos = async (req: Request, res: Response) => {
   const data = await MediaService.uploadVideos(req, res)
-  const result: Media[] = data.map((file) => {
-    return { url: `http://localhost:4000${STATIC_FILE_ROUTE}/videos/${file.newFilename}`, type: MediaType.Video }
+  const encodedFileName = await MediaService.hlsEncodeVideo({
+    inputFile: data[0].newFilename,
+    outputFile: 'encoded' + data[0].newFilename,
+    ffmpegOptions: ''
   })
-  res.json({ message: 'Video Upload Success', result })
+  res.json({ ok: 'ok' })
+  // const result: Media[] = data.map((file) => {
+  //   return { url: `http://localhost:4000${STATIC_FILE_ROUTE}/videos/${file.newFilename}`, type: MediaType.Video }
+  // })
+  // res.json({ message: 'Video Upload Success', result })
 }
 
 export const getStaticFile = (folderPath: string) => (req: Request, res: Response) => {
