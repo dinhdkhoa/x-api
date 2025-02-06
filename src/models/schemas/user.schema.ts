@@ -1,6 +1,5 @@
-import { ObjectId } from "mongodb"
-import { UserVerifyStatus } from "~/constants/enum"
-
+import { ObjectId } from 'mongodb'
+import { UserVerifyStatus } from '~/constants/enum'
 
 interface UserType {
   _id: ObjectId
@@ -13,6 +12,7 @@ interface UserType {
   email_verify_at: Date | null // jwt hoặc '' nếu đã xác thực email
   changePasswordAt: Date | null // jwt hoặc '' nếu đã xác thực email
   verify: UserVerifyStatus
+  twitter_circle?: string[]
 
   bio: string // optional
   location: string // optional
@@ -23,7 +23,7 @@ interface UserType {
 }
 
 export interface UserRequest extends Pick<UserType, 'name' | 'email' | 'password'> {
-  confirmPassword: string,
+  confirmPassword: string
   dob: string
 }
 
@@ -38,6 +38,7 @@ export default class User {
   public email_verify_at: Date | null
   public changePasswordAt: Date | null
   public verify: UserVerifyStatus
+  public twitter_circle: ObjectId[]
 
   public bio: string
   public location: string
@@ -46,15 +47,15 @@ export default class User {
   public avatar: string
   public cover_photo: string
 
-  constructor(user:  Partial<Omit<UserType, 'email' | 'password'>> & Pick<UserType, 'email' | 'password'>) {
+  constructor(user: Partial<Omit<UserType, 'email' | 'password'>> & Pick<UserType, 'email' | 'password'>) {
     const date = new Date()
     this._id = new ObjectId()
     this.name = user.name || ''
     this.email = user.email
     this.date_of_birth = user.date_of_birth || date
     this.password = user.password
-    this.created_at = user.created_at  || date
-    this.updated_at = user.updated_at  || date
+    this.created_at = user.created_at || date
+    this.updated_at = user.updated_at || date
     this.email_verify_at = null
     this.changePasswordAt = null
     this.verify = user.verify || UserVerifyStatus.Unverified
@@ -64,6 +65,6 @@ export default class User {
     this.username = user.username || this.name + this._id.toString()
     this.avatar = user.avatar || ''
     this.cover_photo = user.cover_photo || ''
+    this.twitter_circle = user.twitter_circle?.map((id) => new ObjectId(id)) || []
   }
-
 }

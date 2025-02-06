@@ -4,12 +4,16 @@ import User from '~/models/schemas/user.schema'
 import RefreshToken from '~/models/schemas/refreshToken.schema'
 import Tweet from '~/models/schemas/tweet.schema'
 import Hashtag from '~/models/schemas/hashtags.schema'
+import Bookmark from '~/models/schemas/Bookmark.schema'
+import Like from '~/models/schemas/likes.schema'
 
 const collectionName = {
   users: 'users',
   refreshTokens: 'refreshTokens',
   tweets: 'tweets',
   hashtags: 'hashtags',
+  bookmarks: 'bookmarks',
+  likes: 'likes'
 } as const
 
 class CollectionManager {
@@ -31,6 +35,12 @@ class CollectionManager {
   }
   static get hashtags() {
     return this.getCollection<Hashtag>(collectionName.hashtags)
+  }
+  static get bookmarks() {
+    return this.getCollection<Bookmark>(collectionName.bookmarks)
+  }
+  static get likes() {
+    return this.getCollection<Like>(collectionName.likes)
   }
 }
 

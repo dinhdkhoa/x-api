@@ -256,7 +256,7 @@ export const changePasswordValidation = validate(
       oldPassword: {
         trim: true,
         notEmpty: true,
-        isString: true,
+        isString: true
       },
       password: {
         trim: true,
@@ -275,13 +275,13 @@ export const changePasswordValidation = validate(
         },
         custom: {
           options: async (password: string, { req }) => {
-            if(hashPassword(password) == hashPassword(req.body.password)) {
+            if (hashPassword(password) == hashPassword(req.body.password)) {
               throw new ForbiddenError('Password Cannot Be The Same')
             }
             req.body.password = hashPassword(password)
           }
         }
-      },
+      }
     },
     ['body']
   )
@@ -291,4 +291,13 @@ export const verifiedUserValidator = (req: Request, res: Response, next: NextFun
   const { verify } = req.decodedAccessToken!
   if (verify !== UserVerifyStatus.Verified) next(new ForbiddenError('User is not verified'))
   next()
+}
+
+export const isUserLoggedInValidator = (middleware: (req: Request, res: Response, next: NextFunction) => void) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (req.headers.authorization) {
+      return middleware(req, res, next)
+    }
+    next()
+  }
 }
