@@ -70,8 +70,7 @@ export async function login(req: Request, res: Response) {
   await saveRefreshToken(new RefreshToken({ userId, token: refreshToken }))
   res.json({
     message: 'Login successfully',
-    accessToken,
-    refreshToken
+    data: { accessToken, refreshToken }
   })
 }
 
@@ -85,7 +84,7 @@ export async function logout(req: Request, res: Response) {
   throw new UnauthorizedError('Unable To Find Refresh Token')
 }
 export async function refreshUserToken(req: Request<{}, {}, { refreshToken: string }>, res: Response) {
-  const { userId , verify, exp } = req.decodedRefreshToken!
+  const { userId, verify, exp } = req.decodedRefreshToken!
   const { refreshToken } = req.body
 
   const [accessToken, newRefreshToken, isDeleted] = await Promise.all([
@@ -93,9 +92,9 @@ export async function refreshUserToken(req: Request<{}, {}, { refreshToken: stri
     signJWT({ payload: { userId, type: TokenType.RefreshToken, verify, exp } }),
     collections.refreshTokens.deleteOne({ userId, token: refreshToken }, {})
   ])
-  if(isDeleted.deletedCount == 0) throw new UnauthorizedError('Refresh Token Has Been Deleted')
+  if (isDeleted.deletedCount == 0) throw new UnauthorizedError('Refresh Token Has Been Deleted')
   await saveRefreshToken(new RefreshToken({ userId, token: newRefreshToken }))
-  
+
   res.json({
     message: 'Refreshed Token',
     accessToken,
@@ -117,10 +116,7 @@ export async function verifyEmail(req: Request, res: Response) {
   }
 }
 
-export async function changePasswordRequest(
-  req: Request,
-  res: Response
-) {
+export async function changePasswordRequest(req: Request, res: Response) {
   const { _id, verify } = req.user!
   const forgot_password_token = await signToken(_id.toString(), TokenType.ForgotPasswordToken)
   // const result = await collections.users.findOneAndUpdate(
@@ -192,7 +188,7 @@ export async function getUser(req: Request, res: Response) {
   const { userId } = req.decodedAccessToken!
   const user = await getUserProfile({ _id: new ObjectId(userId) })
 
-  res.json({ user })
+  res.json({ data: user })
 }
 
 export async function updateProfile(req: Request, res: Response) {
