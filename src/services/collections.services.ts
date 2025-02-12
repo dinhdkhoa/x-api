@@ -7,6 +7,7 @@ import Hashtag from '~/models/schemas/hashtags.schema'
 import Like from '~/models/schemas/likes.schema'
 import Followers from '~/models/schemas/followers.schema'
 import Bookmark from '~/models/schemas/bookmark.schema'
+import Conversation from '~/models/schemas/Conversations.schema'
 
 const collectionName = {
   users: 'users',
@@ -15,7 +16,8 @@ const collectionName = {
   hashtags: 'hashtags',
   bookmarks: 'bookmarks',
   likes: 'likes',
-  followers: 'followers'
+  followers: 'followers',
+  conversations: 'conversations'
 } as const
 
 class CollectionManager {
@@ -46,6 +48,9 @@ class CollectionManager {
   }
   static get likes() {
     return this.getCollection<Like>(collectionName.likes)
+  }
+  static get conversations() {
+    return this.getCollection<Conversation>(collectionName.conversations)
   }
 }
 

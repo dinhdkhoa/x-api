@@ -5,6 +5,9 @@ import { errorHandlerMiddleware } from './middlewares/errors-handler.middleware'
 import { STATIC_FILE_ROUTE, UPLOAD_IMAGE_DIR } from './constants/dir'
 import { Server } from 'socket.io'
 import cors from 'cors'
+import collections from './services/collections.services'
+import Conversation from './models/schemas/Conversations.schema'
+import { ObjectId } from 'mongodb'
 
 mongoDB.connect()
 
@@ -39,10 +42,16 @@ io.on('connection', (socket) => {
   socketConnectingUserId[userId] = {
     socket_id: socket.id
   }
-  socket.addListener('send private message', (args: { payload: string; to: string }) => {
+  socket.addListener('send private message', async (args: { payload: string; to: string }) => {
     const { to, payload } = args
     // if (!socketConnectingUserId[to]?.socket_id) return
     console.log(to, payload, socketConnectingUserId[to].socket_id)
+    const newConvo = new Conversation({
+      content: payload,
+      receiver_id: new ObjectId(to),
+      sender_id:  new ObjectId(userId)
+    })
+    await collections.conversations.insertOne(newConvo)
     socket.to(socketConnectingUserId[to].socket_id).emit('reply private message', {
       from: userId,
       payload
