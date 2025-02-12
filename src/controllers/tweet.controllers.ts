@@ -10,7 +10,7 @@ export const createTweet = async (req: Request<{}, {}, TweetRequestBody>, res: R
 }
 
 export const getTweetController = async (req: Request, res: Response) => {
-  const result = await TweetService.increaseView(req.params.tweet_id, req.decodedAccessToken?.user_id)
+  const result = await TweetService.increaseView(req.params.tweet_id, req.decodedAccessToken!.userId)
   const tweet = {
     ...req.tweet,
     guest_views: result.guest_views,

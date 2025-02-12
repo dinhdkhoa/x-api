@@ -62,7 +62,7 @@ export default class User {
     this.bio = user.bio || ''
     this.location = user.location || ''
     this.website = user.website || ''
-    this.username = user.username || this.name + this._id.toString()
+    this.username = user.username || 'user' + this._id.toString()
     this.avatar = user.avatar || ''
     this.cover_photo = user.cover_photo || ''
     this.twitter_circle = user.twitter_circle?.map((id) => new ObjectId(id)) || []
