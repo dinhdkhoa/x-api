@@ -8,7 +8,7 @@ import { errorHandler } from '~/utils/error-handlers'
 const conversationsRouter = Router()
 
 conversationsRouter.get(
-  '/receivers/:receiver_id',
+  '/receiver/:receiver_id',
   accessTokenValidation,
   verifiedUserValidator,
   paginationValidator,
