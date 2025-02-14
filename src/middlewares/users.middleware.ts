@@ -10,6 +10,7 @@ import { verifyJWT } from '~/utils/jwt'
 import validate from '~/utils/validator'
 import { Request, Response } from 'express'
 import { hashPassword } from '~/utils/encrytion'
+import { checkVerifiedUser, validateAccessToken } from '~/utils/validate-token'
 
 checkSchema({})
 
@@ -112,20 +113,8 @@ export const accessTokenValidation = validate(
         notEmpty: true,
         custom: {
           options: async (accessToken: string, { req }) => {
-            try {
-              const token = accessToken.split(' ')[1]
-              if (!token) {
-                throw new UnauthorizedError()
-              }
-              const jwtPayload = await verifyJWT({ token })
-              req.decodedAccessToken = jwtPayload
-              return true
-            } catch (error) {
-              if (error instanceof JsonWebTokenError) {
-                throw new UnauthorizedError(error.message)
-              }
-              throw error
-            }
+            req.decodedAccessToken = await validateAccessToken(accessToken)
+            return true
           }
         }
       }
@@ -288,8 +277,7 @@ export const changePasswordValidation = validate(
 )
 
 export const verifiedUserValidator = (req: Request, res: Response, next: NextFunction) => {
-  const { verify } = req.decodedAccessToken!
-  if (verify !== UserVerifyStatus.Verified) next(new ForbiddenError('User is not verified'))
+  checkVerifiedUser(req.decodedAccessToken!)
   next()
 }
 

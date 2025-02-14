@@ -17,7 +17,7 @@ export const getConversationsController = async (req: Request<any>, res: Respons
       limit,
       page,
       total_page: Math.ceil(result.total / limit),
-      conversations: result.conversations
+      conversations: result.conversations.slice().reverse()
     },
     message: 'Get conversations successfully'
   })
