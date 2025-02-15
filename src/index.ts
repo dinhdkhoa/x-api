@@ -26,7 +26,7 @@ app.use('/', routes)
 app.use(errorHandlerMiddleware)
 
 const expressServer = app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`App is running in ${process.env.NODE_ENV} on port ${port}`)
 })
 
 const io = new Server(expressServer, socketConfigOptions)
