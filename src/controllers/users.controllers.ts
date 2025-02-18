@@ -6,6 +6,7 @@ import { ErrorWithStatus, ForbiddenError, UnauthorizedError } from '~/models/err
 import RefreshToken from '~/models/schemas/refreshToken.schema'
 import User, { UserRequest } from '~/models/schemas/user.schema'
 import collections from '~/services/collections.services'
+import { sendEmailSES, sendEmailWithTemplate } from '~/services/email.services'
 import { hashPassword } from '~/utils/encrytion'
 import { signJWT, TokenPayload } from '~/utils/jwt'
 
@@ -41,11 +42,12 @@ async function saveRefreshToken(token: RefreshToken) {
 }
 
 export async function register(req: Request<{}, {}, UserRequest>, res: Response) {
-  const { dob, ...payload } = req.body
+  const { dob,email, ...payload } = req.body
 
   const { insertedId } = await collections.users.insertOne(
     new User({
       ...payload,
+      email,
       password: hashPassword(payload.password),
       date_of_birth: new Date(dob)
     })
@@ -54,8 +56,12 @@ export async function register(req: Request<{}, {}, UserRequest>, res: Response)
   const userId = insertedId.toString()
   const [{ accessToken, refreshToken }, emailVerifyToken] = await Promise.all([
     signCredentialTokens(userId, UserVerifyStatus.Unverified),
-    signToken(userId, TokenType.EmailVerifyToken)
+    signToken(userId, TokenType.EmailVerifyToken),
   ])
+  sendEmailWithTemplate({content: 'Click the link below to verify your email', 
+    link:  `${process.env.CLIENT_URL}/?verifyToken=${emailVerifyToken}`,
+    titleLink: 'Verify',subject: 'Verify Your Email', toAddresses:  email,  title: 'Email Verification'})
+  
   await saveRefreshToken(new RefreshToken({ userId, token: refreshToken }))
   res.json({
     message: 'User registered successfully',
@@ -117,13 +123,16 @@ export async function verifyEmail(req: Request, res: Response) {
 }
 
 export async function changePasswordRequest(req: Request, res: Response) {
-  const { _id, verify } = req.user!
+  const { _id, verify, email } = req.user!
   const forgot_password_token = await signToken(_id.toString(), TokenType.ForgotPasswordToken)
   // const result = await collections.users.findOneAndUpdate(
   //   { _id: new ObjectId(userIdFromMiddleware)},
   //   { $set: { forgot_password_token } , $currentDate: {updated_at:  true}},
   //   { returnDocument: 'after'}
   // )
+  sendEmailWithTemplate({content: 'You\'ve requested to update password. Click the link below to update your password', 
+    link:  `${process.env.CLIENT_URL}/?forgotPasswordToken=${forgot_password_token}`,
+    titleLink: 'Click Here',subject: 'Your Password Change Request', toAddresses:  email,  title: 'Password Change Request'})
   res.json({ message: `Password Change Has Been Sent To Your Email: ${forgot_password_token}` })
 }
 

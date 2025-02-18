@@ -8,6 +8,7 @@ import initSocket from './socket'
 import helmet from 'helmet'
 import { corsConfig, envConfig, rateLimiter, socketConfigOptions } from './config'
 import { config } from 'dotenv'
+import { sendEmailWithTemplate } from './services/email.services'
 
 mongoDB.connect()
 
@@ -20,6 +21,11 @@ app.use(rateLimiter)
 const port = process.env.PORT
 
 app.use(express.json())
+
+// app.get('/sendemail', (req, res, next) => {
+//   sendEmailWithTemplate({content: 'Content', link: 'google.com', titleLink: 'Click',subject: 'Test Template', toAddresses: process.env.TEST_TO_ADDRESS || '' ,  title: 'Test Content'})
+//   res.json({ok : 'ok'})
+// })
 
 app.use('/', routes)
 // app.use(STATIC_FILE_ROUTE, express.static(UPLOAD_IMAGE_DIR))
