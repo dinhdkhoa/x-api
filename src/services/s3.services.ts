@@ -2,18 +2,18 @@ import * as AWS from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { awsIAMConfig } from "~/config";
 import fs from 'fs'
-import { UPLOAD_IMAGE_DIR } from "~/constants/dir";
+import { UPLOAD_IMAGE_DIR, UPLOAD_VIDEO_DIR } from "~/constants/dir";
 const mime = require('mime-types')
 
 const client = new AWS.S3([awsIAMConfig]);
 
 
-export const uploadFileS3 = (fileName: string) => {
-    const file = fs.readFileSync(UPLOAD_IMAGE_DIR + '/' + fileName)
+export const uploadFileS3 = (fileName: string, s3Folder = 'images/', dir: string =UPLOAD_IMAGE_DIR) => {
+    const file = fs.readFileSync( dir  + '/' + fileName)
     const contentType =  mime.lookup(fileName) || 'application/octet-stream';
     const parallelUploads3 = new Upload({
       client,
-      params: { Bucket : process.env.AWS_BUCKET_NAME, Key: 'images/' + fileName, Body: file, ContentType: contentType},
+      params: { Bucket : process.env.AWS_BUCKET_NAME, Key: s3Folder + fileName, Body: file, ContentType: contentType},
   
       // optional tags
       tags: [
