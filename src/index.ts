@@ -9,6 +9,7 @@ import helmet from 'helmet'
 import { corsConfig, envConfig, rateLimiter, socketConfigOptions } from './config'
 import { config } from 'dotenv'
 import { sendEmailWithTemplate } from './services/email.services'
+import './services/s3.services'
 
 mongoDB.connect()
 

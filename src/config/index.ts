@@ -22,3 +22,11 @@ export const rateLimiter = rateLimit({
 export const envConfig : DotenvConfigOptions = {
   path : process.env.NODE_ENV == 'production' ? '.env.production': '.env'
 }
+
+export const awsIAMConfig = {
+  region: process.env.AWS_REGION,
+  credentials: {
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID
+  }
+}

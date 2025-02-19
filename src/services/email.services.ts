@@ -1,17 +1,12 @@
-const { SendEmailCommand, SESClient } = require('@aws-sdk/client-ses')
+import { SendEmailCommand, SESClient } from '@aws-sdk/client-ses'
 import fs from 'fs'
+import { awsIAMConfig } from '~/config'
 import { EMAIL_TEMPLATE_DIR } from '~/constants/dir'
 
 // Create SES service object.
-const sesClient = new SESClient({
-  region: process.env.AWS_REGION,
-  credentials: {
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID
-  }
-})
+const sesClient = new SESClient([awsIAMConfig])
 interface CreateSendEmailCommandParams {
-  fromAddress: string | string[],
+  fromAddress: string,
   toAddresses: string | string[],
   ccAddresses?: string[],
   body: any,
