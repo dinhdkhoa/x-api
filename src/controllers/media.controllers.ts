@@ -3,13 +3,18 @@ import path from 'path'
 import { STATIC_FILE_ROUTE, UPLOAD_IMAGE_DIR } from '~/constants/dir'
 import { Media, MediaType } from '~/models/media.model'
 import { MediaService } from '~/services/media.services'
+import { uploadFileS3 } from '~/services/s3.services'
+import fs from 'fs'
 
 export const uploadImages = async (req: Request, res: Response) => {
   const data = await MediaService.uploadImages(req, res)
   const result: Media[] = await Promise.all(
     data.map(async (file) => {
       const { newName } = await MediaService.resizeImage(file)
-      return { url: `http://localhost:4000${STATIC_FILE_ROUTE}/${newName}`, type: MediaType.Image }
+      const uploadRes = await uploadFileS3(newName)
+      fs.unlinkSync(UPLOAD_IMAGE_DIR + '/' + newName)
+      
+      return { url: uploadRes.Location || '', type: MediaType.Image }
     })
   )
   res.json({ message: 'Image Upload Success', result })

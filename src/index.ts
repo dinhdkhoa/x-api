@@ -1,15 +1,12 @@
 import cors from 'cors'
 import express from 'express'
+import helmet from 'helmet'
+import { Server } from 'socket.io'
+import { corsConfig, rateLimiter, socketConfigOptions } from './config'
 import { errorHandlerMiddleware } from './middlewares/errors-handler.middleware'
 import routes from './routes'
 import mongoDB from './services/mongoDB.services'
-import { Server } from 'socket.io'
 import initSocket from './socket'
-import helmet from 'helmet'
-import { corsConfig, envConfig, rateLimiter, socketConfigOptions } from './config'
-import { config } from 'dotenv'
-import { sendEmailWithTemplate } from './services/email.services'
-import './services/s3.services'
 
 mongoDB.connect()
 
