@@ -1,15 +1,20 @@
 import { Request, Response } from 'express'
 import path from 'path'
-import { STATIC_FILE_ROUTE, UPLOAD_IMAGE_DIR } from '~/constants/dir'
+import { STATIC_FILE_ROUTE, UPLOAD_IMAGE_DIR, UPLOAD_VIDEO_DIR } from '~/constants/dir'
 import { Media, MediaType } from '~/models/media.model'
 import { MediaService } from '~/services/media.services'
+import { uploadFileS3 } from '~/services/s3.services'
+import fs from 'fs'
 
 export const uploadImages = async (req: Request, res: Response) => {
   const data = await MediaService.uploadImages(req, res)
   const result: Media[] = await Promise.all(
     data.map(async (file) => {
       const { newName } = await MediaService.resizeImage(file)
-      return { url: `http://localhost:4000${STATIC_FILE_ROUTE}/${newName}`, type: MediaType.Image }
+      const uploadRes = await uploadFileS3(newName)
+      fs.unlinkSync(UPLOAD_IMAGE_DIR + '/' + newName)
+      
+      return { url: uploadRes.Location || '', type: MediaType.Image }
     })
   )
   res.json({ message: 'Image Upload Success', result })
@@ -17,11 +22,21 @@ export const uploadImages = async (req: Request, res: Response) => {
 
 export const uploadVideos = async (req: Request, res: Response) => {
   const data = await MediaService.uploadVideos(req, res)
+
   const encodedFileName = await MediaService.hlsEncodeVideo({
     inputFile: data[0].newFilename,
     outputFile: 'encoded' + data[0].newFilename,
     ffmpegOptions: ''
   })
+  const uploadRes = await uploadFileS3(encodedFileName, 'videos/', UPLOAD_VIDEO_DIR)
+  fs.unlinkSync(UPLOAD_VIDEO_DIR+ '/' + encodedFileName)
+  res.json({ message: 'Video Upload Success', result : 
+    {  url: uploadRes.Location || '', type: MediaType.Video }
+   })
+
+  // const result: Media[] = data.map((file) => {
+  //   return { url: `http://localhost:4000${STATIC_FILE_ROUTE}/videos/${file.newFilename}`, type: MediaType.Video }
+  // })
   res.json({ ok: 'ok' })
   // const result: Media[] = data.map((file) => {
   //   return { url: `http://localhost:4000${STATIC_FILE_ROUTE}/videos/${file.newFilename}`, type: MediaType.Video }

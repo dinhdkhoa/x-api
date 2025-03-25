@@ -1,8 +1,9 @@
 import { Db, MongoClient, ServerApiVersion } from 'mongodb'
 
 import { config } from 'dotenv'
+import { envConfig } from '~/config'
 
-config()
+config(envConfig)
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PW}@${process.env.DB_NAME}.3iwfp.mongodb.net/?retryWrites=true&w=majority&appName=x-api`
 

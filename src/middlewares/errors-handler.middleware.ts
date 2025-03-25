@@ -15,5 +15,7 @@ export const errorHandlerMiddleware = (err: any, req: Request, res: Response, ne
       .json({ message: capitalizeFirstLetter(message), ...error })
     return
   }
-  res.status(HttpStatusCode.InternalServerError).json({ message: capitalizeFirstLetter(err.message) })
+  res
+    .status(HttpStatusCode.InternalServerError)
+    .json({ message: capitalizeFirstLetter(err.message), errors: { ...err } })
 }

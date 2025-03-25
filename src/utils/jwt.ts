@@ -30,7 +30,8 @@ export const signJWT = ({ payload, privateKey = JWT_SECRET, options = { algorith
         options.expiresIn = ACCESSS_TOKEN_EXPIRES_IN
         break
       case TokenType.RefreshToken:
-        options.expiresIn = payload.exp ?? REFRESH_TOKEN_EXPIRES_IN
+        if(payload.exp) break
+        options.expiresIn =  REFRESH_TOKEN_EXPIRES_IN
         break
       case TokenType.EmailVerifyToken:
         options.expiresIn = EMAIL_VERIFY_TOKEN_EXPIRES_IN
